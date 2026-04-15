@@ -1,0 +1,47 @@
+env: dev
+logging:
+  level: DEBUG
+
+postgres:
+  dsn: postgresql+asyncpg://${POSTGRES_USER:-kov}:${POSTGRES_PASSWORD:-kov}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-kov}
+
+qdrant:
+  url: ${QDRANT_URL:-http://qdrant:6333}
+  collection: kov_chunks
+  vector_size: 64
+
+s3:
+  endpoint_url: ${S3_ENDPOINT_URL:-http://minio:9000}
+  access_key: ${S3_ACCESS_KEY:-minioadmin}
+  secret_key: ${S3_SECRET_KEY:-minioadmin}
+  bucket: ${S3_BUCKET:-kov-artifacts}
+  region: ${S3_REGION:-us-east-1}
+
+rag_scan:
+  pipeline_version: "1.0"
+  chunking:
+    max_chars: 1200
+    overlap_chars: 120
+
+rag_search:
+  pipeline_version: "1.0"
+  planner:
+    max_queries: 20
+  retrieval:
+    top_k_per_query: 10
+    min_score: 0.0
+  telegram:
+    safe_limit_chars: 3900
+    max_parts: 3
+
+llm:
+  base_url: ${LLM_BASE_URL:-""}
+  api_key: ${LLM_API_KEY:-""}
+  model: ${LLM_MODEL:-""}
+  temperature: 0.2
+  max_tokens: 800
+
+telegram:
+  bot_token: ${TELEGRAM_BOT_TOKEN:-""}
+  api_base_url: http://api:8000
+

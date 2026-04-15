@@ -1,0 +1,47 @@
+env: dev
+logging:
+  level: INFO
+
+postgres:
+  dsn: postgresql+asyncpg://kov:kov@postgres:5432/kov
+
+qdrant:
+  url: http://qdrant:6333
+  collection: kov_chunks
+  vector_size: 64
+
+s3:
+  endpoint_url: http://minio:9000
+  access_key: minioadmin
+  secret_key: minioadmin
+  bucket: kov-artifacts
+  region: us-east-1
+
+rag_scan:
+  pipeline_version: "1.0"
+  chunking:
+    max_chars: 1200
+    overlap_chars: 120
+
+rag_search:
+  pipeline_version: "1.0"
+  planner:
+    max_queries: 20
+  retrieval:
+    top_k_per_query: 10
+    min_score: 0.0
+  telegram:
+    safe_limit_chars: 3900
+    max_parts: 3
+
+llm:
+  base_url: ""
+  api_key: ""
+  model: ""
+  temperature: 0.2
+  max_tokens: 800
+
+telegram:
+  bot_token: ""
+  api_base_url: http://api:8000
+
