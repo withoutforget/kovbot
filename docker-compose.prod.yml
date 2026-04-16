@@ -103,18 +103,11 @@ services:
       - public
       - internal
 
-  backup:
+  backup-once:
     build:
       context: .
       dockerfile: docker/backup.Dockerfile
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      qdrant:
-        condition: service_started
-      minio:
-        condition: service_started
+    user: "0:0"   # ✅ FIX
     environment:
       KOV_CONFIG_PATH: ${KOV_CONFIG_PATH:-configs/prod.yaml}
       POSTGRES_DB: ${POSTGRES_DB:-kov}
@@ -128,20 +121,36 @@ services:
       S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
       S3_BUCKET: ${S3_BUCKET:-kov-artifacts}
       S3_REGION: ${S3_REGION:-us-east-1}
+      BACKUP_RUN_ONCE: "1"
       BACKUP_KEEP_HOURS: ${BACKUP_KEEP_HOURS:-36}
       BACKUP_INTERVAL_MINUTES: ${BACKUP_INTERVAL_MINUTES:-120}
-      BACKUP_INCLUDE_S3_DATA: ${BACKUP_INCLUDE_S3_DATA:-1}
+      BACKUP_INCLUDE_S3_DATA: ${BACKUP_INCLUDE_S3_DATA:-0}
       BACKUP_LOCAL_DIR: /backups
-      BACKUP_S3_ENDPOINT_URL: ${BACKUP_S3_ENDPOINT_URL:-}
-      BACKUP_S3_ACCESS_KEY: ${BACKUP_S3_ACCESS_KEY:-}
-      BACKUP_S3_SECRET_KEY: ${BACKUP_S3_SECRET_KEY:-}
-      BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET:-}
-      BACKUP_S3_REGION: ${BACKUP_S3_REGION:-}
-      BACKUP_S3_PREFIX: ${BACKUP_S3_PREFIX:-backups}
     volumes:
       - backups_data:/backups
-    networks:
-      - internal
+
+  backup-restore:
+    build:
+      context: .
+      dockerfile: docker/backup.Dockerfile
+    user: "0:0"   # ✅ FIX
+    entrypoint: ["python", "-m", "kov.backup.restore_cli"]
+    environment:
+      KOV_CONFIG_PATH: ${KOV_CONFIG_PATH:-configs/prod.yaml}
+      POSTGRES_DB: ${POSTGRES_DB:-kov}
+      POSTGRES_USER: ${POSTGRES_USER:-kov}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kov}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://minio:9000}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+      S3_BUCKET: ${S3_BUCKET:-kov-artifacts}
+      S3_REGION: ${S3_REGION:-us-east-1}
+    volumes:
+      - backups_data:/backups
+      - ./:/workspace:ro
 
 networks:
   public:

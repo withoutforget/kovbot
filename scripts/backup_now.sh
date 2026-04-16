@@ -11,6 +11,6 @@ echo "Running one-shot backup via docker compose..."
 docker compose run --rm \
   -e BACKUP_INTERVAL_MINUTES=120 \
   -e BACKUP_KEEP_HOURS="${BACKUP_KEEP_HOURS:-36}" \
-  -e BACKUP_INCLUDE_S3_DATA="${BACKUP_INCLUDE_S3_DATA:-1}" \
+  -e BACKUP_INCLUDE_S3_DATA="${BACKUP_INCLUDE_S3_DATA:-0}" \
   backup-once
 

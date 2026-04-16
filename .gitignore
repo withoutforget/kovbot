@@ -21,3 +21,5 @@ TZ/
 
 # Local configs with secrets (keep dev/prod templates tracked)
 configs/local*.yaml
+
+backup_*.tar.gz
