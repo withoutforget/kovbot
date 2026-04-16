@@ -62,8 +62,12 @@ async def rag_search_stream(
             search_profile=req.search_profile,
         )
         expanded = plan.get("expanded_contexts") or []
+        profile_summary = await service._get_profile_summary(user_id=user_uuid)
         async for delta in service.compose_answer_llm_stream(
-            user_query=req.user_query, language=req.language, expanded_contexts=expanded
+            user_query=req.user_query,
+            language=req.language,
+            expanded_contexts=expanded,
+            user_profile_summary=profile_summary,
         ):
             yield delta.encode("utf-8")
 

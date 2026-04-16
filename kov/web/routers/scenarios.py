@@ -126,3 +126,19 @@ async def interview_view(user_id: str, session: AsyncSession = Depends(get_db_se
         profile.interview_summary = summary
         await session.commit()
     return InterviewViewResponse(answers=answers, summary=summary)
+
+
+@router.post("/interview/{user_id}/clear")
+async def interview_clear(user_id: str, session: AsyncSession = Depends(get_db_session)) -> dict[str, bool]:
+    user_uuid = uuid.UUID(user_id)
+    res = await session.execute(select(Scenario).where(Scenario.key == "interview"))
+    scenario = res.scalar_one_or_none()
+    if not scenario:
+        raise HTTPException(status_code=500, detail="Scenario interview not seeded")
+    ans_res = await session.execute(
+        select(UserAnswer).where(and_(UserAnswer.user_id == user_uuid, UserAnswer.scenario_id == scenario.id))
+    )
+    for a in ans_res.scalars().all():
+        await session.delete(a)
+    await session.commit()
+    return {"ok": True}

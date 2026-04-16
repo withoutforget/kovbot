@@ -145,6 +145,19 @@ class UserSchedule(Base, UuidPkMixin, TimestampMixin, SoftDeleteMixin):
     at_time: Mapped[time] = mapped_column(Time)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     last_time_asked: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_time_answered: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_time_missed: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class ReminderEvent(Base, UuidPkMixin, TimestampMixin):
+    __tablename__ = "reminder_events"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), index=True)
+    schedule_key: Mapped[str] = mapped_column(String(64), index=True)  # mood_tracker/habit_tracker
+    asked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    answered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    status: Mapped[str] = mapped_column(String(16), index=True)  # asked/answered/missed
+    meta: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
 
 
 class Document(Base, UuidPkMixin, TimestampMixin, SoftDeleteMixin):

@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from kov.config import AppConfig
 from kov.db.models import Chunk as DbChunk
+from kov.db.models import UserProfile
 from kov.db.models import RagContext, RagQuery, RagRequest, RagResult
 from kov.embeddings.factory import create_embedder
 from kov.llm.openai_compat import OpenAICompatClient
@@ -39,6 +40,7 @@ class RagSearchService:
         language: str,
         search_profile: str,
     ) -> RagAnswer:
+        profile_summary = await self._get_profile_summary(user_id=user_id)
         plan = plan_queries(
             config=self.config, user_query=user_query, language=language, search_profile=search_profile
         )
@@ -138,7 +140,10 @@ class RagSearchService:
 
         expanded_contexts = await self._expand_contexts(request_id=request_uuid, reranked=reranked, persist=True)
         answer_text = await self._compose_answer_llm(
-            user_query=user_query, language=language, expanded_contexts=expanded_contexts
+            user_query=user_query,
+            language=language,
+            expanded_contexts=expanded_contexts,
+            user_profile_summary=profile_summary,
         )
         telegram_parts = split_telegram(
             answer_text,
@@ -207,6 +212,14 @@ class RagSearchService:
             "reranked": reranked[:20],
             "expanded_contexts": expanded_contexts,
         }
+
+    async def _get_profile_summary(self, *, user_id: uuid.UUID | None) -> str | None:
+        if not user_id:
+            return None
+        res = await self.session.execute(select(UserProfile).where(UserProfile.user_id == user_id))
+        prof = res.scalar_one_or_none()
+        summary = (prof.interview_summary or "").strip() if prof else ""
+        return summary or None
 
     async def _get_chunk(self, chunk_id: uuid.UUID) -> DbChunk | None:
         res = await self.session.execute(select(DbChunk).where(DbChunk.id == chunk_id))
@@ -294,7 +307,12 @@ class RagSearchService:
         return unique
 
     async def _compose_answer_llm(
-        self, *, user_query: str, language: str, expanded_contexts: list[dict[str, Any]]
+        self,
+        *,
+        user_query: str,
+        language: str,
+        expanded_contexts: list[dict[str, Any]],
+        user_profile_summary: str | None = None,
     ) -> str:
         # final answer should be the LLM answer, without sources/debug content
         ctx_texts = self._dedupe_context_texts(expanded_contexts)
@@ -315,15 +333,21 @@ class RagSearchService:
 
         system = (
             "Ты — психологический ассистент. Отвечай бережно, структурированно и практично. "
-            "Используй ТОЛЬКО информацию из предоставленных фрагментов (RAG context). "
+            "Основные объяснения/рекомендации опирай на предоставленные фрагменты (RAG context). "
             "Не упоминай document_id/страницы/источники, не делай ссылок на книги. "
             "Не выдумывай факты, которых нет в контексте. "
             "Не используй Markdown, заголовки и спецразметку. "
             "Формат: 1) короткое объяснение 2) 3–7 конкретных шагов/рекомендаций (нумерованным списком) "
             "3) (опционально) одно короткое упражнение. "
+            "В конце (опционально) предложи ОДИН уместный следующий сценарий бота: "
+            "«Интервью», «Техники», «Трекер настроения», «Трекер привычек», «Диалог», «Отношения». "
+            "Формат одной строки: 'Если хотите, можно перейти в: <сценарий> — <почему>'. "
             "Язык ответа: " + (language or "ru")
         )
-        user = f"Запрос пользователя:\n{user_query.strip()}\n\nФрагменты из корпуса:\n{joined}"
+        profile_block = ""
+        if user_profile_summary:
+            profile_block = f"Короткая справка о пользователе (из интервью):\n{user_profile_summary.strip()}\n\n"
+        user = f"{profile_block}Запрос пользователя:\n{user_query.strip()}\n\nФрагменты из корпуса:\n{joined}"
 
         raw = await self.llm.chat_completions(
             messages=[{"role": "system", "content": system}, {"role": "user", "content": user}]
@@ -332,7 +356,12 @@ class RagSearchService:
         return text or "Не удалось сгенерировать ответ. Попробуйте переформулировать запрос."
 
     async def compose_answer_llm_stream(
-        self, *, user_query: str, language: str, expanded_contexts: list[dict[str, Any]]
+        self,
+        *,
+        user_query: str,
+        language: str,
+        expanded_contexts: list[dict[str, Any]],
+        user_profile_summary: str | None = None,
     ):
         """
         Async generator yielding answer text deltas.
@@ -355,15 +384,21 @@ class RagSearchService:
 
         system = (
             "Ты — психологический ассистент. Отвечай бережно, структурированно и практично. "
-            "Используй ТОЛЬКО информацию из предоставленных фрагментов (RAG context). "
+            "Основные объяснения/рекомендации опирай на предоставленные фрагменты (RAG context). "
             "Не упоминай document_id/страницы/источники, не делай ссылок на книги. "
             "Не выдумывай факты, которых нет в контексте. "
             "Не используй Markdown, заголовки и спецразметку. "
             "Формат: 1) короткое объяснение 2) 3–7 конкретных шагов/рекомендаций (нумерованным списком) "
             "3) (опционально) одно короткое упражнение. "
+            "В конце (опционально) предложи ОДИН уместный следующий сценарий бота: "
+            "«Интервью», «Техники», «Трекер настроения», «Трекер привычек», «Диалог», «Отношения». "
+            "Формат одной строки: 'Если хотите, можно перейти в: <сценарий> — <почему>'. "
             "Язык ответа: " + (language or "ru")
         )
-        user = f"Запрос пользователя:\n{user_query.strip()}\n\nФрагменты из корпуса:\n{joined}"
+        profile_block = ""
+        if user_profile_summary:
+            profile_block = f"Короткая справка о пользователе (из интервью):\n{user_profile_summary.strip()}\n\n"
+        user = f"{profile_block}Запрос пользователя:\n{user_query.strip()}\n\nФрагменты из корпуса:\n{joined}"
 
         async for delta in self.llm.chat_completions_stream(
             messages=[{"role": "system", "content": system}, {"role": "user", "content": user}]

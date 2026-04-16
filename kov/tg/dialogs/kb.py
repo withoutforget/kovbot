@@ -7,13 +7,14 @@ from typing import Any
 
 from aiogram import Bot
 from aiogram.methods.send_message_draft import SendMessageDraft
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import Dialog, DialogManager, StartMode, Window
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 from aiogram_dialog.widgets.text import Const
 
 from kov.logging import get_logger
+from kov.tg.dialogs.common import profile_merge
 from kov.tg.dialogs.states import KnowledgeBaseSG, MainMenuSG
 from kov.tg.runtime import ensure_user_id, runtime
 
@@ -57,6 +58,12 @@ async def _send_streaming_text(
 
 
 async def on_end_clicked(_, __, manager: DialogManager) -> None:
+    event = manager.event
+    try:
+        if isinstance(event, (Message, CallbackQuery)):
+            await profile_merge(event, data={"last_scenario": "knowledge_base"})
+    except Exception:
+        pass
     manager.dialog_data.pop("history", None)
     await manager.start(MainMenuSG.menu, mode=StartMode.RESET_STACK)
 

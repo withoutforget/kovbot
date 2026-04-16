@@ -23,17 +23,9 @@ services:
     restart: unless-stopped
     command:
       [
-        "uvicorn",
-        "apps.api.main:app",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        "8000",
-        "--proxy-headers",
-        "--forwarded-allow-ips",
-        "*",
-        "--workers",
-        "2",
+        "sh",
+        "-c",
+        "alembic upgrade head && uvicorn apps.api.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips '*' --workers 2",
       ]
 
   worker:
@@ -58,6 +50,9 @@ services:
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-}
     restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
 
   bot:
     build:

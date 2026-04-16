@@ -67,7 +67,12 @@ services:
         condition: service_started
     ports:
       - "8000:8000"
-    command: ["uvicorn", "apps.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command:
+      [
+        "sh",
+        "-c",
+        "alembic upgrade head && uvicorn apps.api.main:app --host 0.0.0.0 --port 8000",
+      ]
     healthcheck:
       test:
         [
@@ -113,6 +118,8 @@ services:
         condition: service_started
       minio:
         condition: service_started
+      api:
+        condition: service_healthy
     command: ["python", "-m", "apps.worker.main"]
 
   bot:

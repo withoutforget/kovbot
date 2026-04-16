@@ -1,0 +1,5 @@
+Alembic migrations for Kov.
+
+Run locally:
+  alembic upgrade head
+

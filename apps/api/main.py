@@ -8,7 +8,6 @@ from fastapi import FastAPI
 
 from kov.config import load_config
 from kov.di.providers import AppProvider
-from kov.db.base import Base
 from kov.logging import configure_logging, get_logger
 from kov.web.routers.health import router as health_router
 from kov.web.routers.habits import router as habits_router
@@ -46,9 +45,7 @@ def create_app() -> FastAPI:
         app.state.config = config
         app.state.db_engine = engine
 
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        # seed scenarios
+        # seed scenarios (DB schema is managed by Alembic migrations)
         from sqlalchemy.ext.asyncio import async_sessionmaker
 
         sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
