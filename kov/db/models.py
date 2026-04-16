@@ -28,6 +28,7 @@ class User(Base, UuidPkMixin, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "users"
 
     telegram_user_id: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    telegram_username: Mapped[str] = mapped_column(String(64), default="", index=True)
     timezone: Mapped[str] = mapped_column(String(64), default="UTC")
     language: Mapped[str] = mapped_column(String(8), default="ru")
 
@@ -309,3 +310,32 @@ class AuditLog(Base, UuidPkMixin, TimestampMixin):
     user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
     action: Mapped[str] = mapped_column(String(128), index=True)
     payload: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+
+
+class TokenUsageEvent(Base, UuidPkMixin, TimestampMixin):
+    __tablename__ = "token_usage_events"
+
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True
+    )
+    telegram_user_id: Mapped[str] = mapped_column(String(64), default="", index=True)
+    telegram_username: Mapped[str] = mapped_column(String(64), default="", index=True)
+    source: Mapped[str] = mapped_column(String(64), default="rag_search", index=True)
+    model: Mapped[str] = mapped_column(String(128), default="", index=True)
+    prompt_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    completion_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    total_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    request_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
+    meta: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+
+
+class UserTokenUsageDay(Base, UuidPkMixin, TimestampMixin):
+    __tablename__ = "user_token_usage_day"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), index=True)
+    day: Mapped[date] = mapped_column(Date, index=True, server_default=func.current_date())
+    prompt_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    completion_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    total_tokens: Mapped[int] = mapped_column(Integer, default=0)
+
+    __table_args__ = (UniqueConstraint("user_id", "day", name="uq_user_token_day"),)

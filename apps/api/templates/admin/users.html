@@ -1,0 +1,40 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+  <div class="card">
+    <h2 style="margin:0 0 6px 0;">Юзеры</h2>
+    <div class="muted">Показываются последние 200. Токены агрегированы по дням.</div>
+  </div>
+
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Telegram</th>
+          <th>IN</th>
+          <th>OUT</th>
+          <th>Total</th>
+          <th>Создан</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+          <tr>
+            <td><a href="/admin/users/{{ u.id }}"><code>{{ u.id }}</code></a></td>
+            <td class="muted">
+              {{ u.telegram_user_id }}
+              {% if u.telegram_username %}
+                <br/>@{{ u.telegram_username }}
+              {% endif %}
+            </td>
+            <td>{{ u.prompt_tokens }}</td>
+            <td>{{ u.completion_tokens }}</td>
+            <td><strong>{{ u.total_tokens }}</strong></td>
+            <td class="muted">{{ u.created_at }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+

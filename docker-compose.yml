@@ -136,7 +136,76 @@ services:
         condition: service_healthy
     command: ["python", "-m", "apps.bot.main"]
 
+  # Backup helpers (not started by default; use `docker compose run ...`)
+  backup-once:
+    build:
+      context: .
+      dockerfile: docker/backup.Dockerfile
+    environment:
+      KOV_CONFIG_PATH: ${KOV_CONFIG_PATH:-configs/dev.yaml}
+      POSTGRES_DB: ${POSTGRES_DB:-kov}
+      POSTGRES_USER: ${POSTGRES_USER:-kov}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kov}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://minio:9000}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+      S3_BUCKET: ${S3_BUCKET:-kov-artifacts}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      BACKUP_RUN_ONCE: "1"
+      BACKUP_KEEP_HOURS: ${BACKUP_KEEP_HOURS:-36}
+      BACKUP_INTERVAL_MINUTES: ${BACKUP_INTERVAL_MINUTES:-120}
+      BACKUP_INCLUDE_S3_DATA: ${BACKUP_INCLUDE_S3_DATA:-1}
+      BACKUP_LOCAL_DIR: /backups
+      BACKUP_S3_ENDPOINT_URL: ${BACKUP_S3_ENDPOINT_URL:-}
+      BACKUP_S3_ACCESS_KEY: ${BACKUP_S3_ACCESS_KEY:-}
+      BACKUP_S3_SECRET_KEY: ${BACKUP_S3_SECRET_KEY:-}
+      BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET:-}
+      BACKUP_S3_REGION: ${BACKUP_S3_REGION:-}
+      BACKUP_S3_PREFIX: ${BACKUP_S3_PREFIX:-backups}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      minio:
+        condition: service_started
+    volumes:
+      - backups_data:/backups
+
+  backup-restore:
+    build:
+      context: .
+      dockerfile: docker/backup.Dockerfile
+    entrypoint: ["python", "-m", "kov.backup.restore_cli"]
+    environment:
+      KOV_CONFIG_PATH: ${KOV_CONFIG_PATH:-configs/dev.yaml}
+      POSTGRES_DB: ${POSTGRES_DB:-kov}
+      POSTGRES_USER: ${POSTGRES_USER:-kov}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kov}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://minio:9000}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+      S3_BUCKET: ${S3_BUCKET:-kov-artifacts}
+      S3_REGION: ${S3_REGION:-us-east-1}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      minio:
+        condition: service_started
+    volumes:
+      - backups_data:/backups
+      - ./:/workspace:ro
+
 volumes:
   postgres_data:
   qdrant_data:
   minio_data:
+  backups_data:

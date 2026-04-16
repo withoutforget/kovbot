@@ -1,0 +1,84 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+  <div class="card">
+    <h2 style="margin:0 0 6px 0;">Юзер</h2>
+    <div><code>{{ u.id }}</code></div>
+    <div class="muted">telegram_user_id: {{ u.telegram_user_id }} {% if u.telegram_username %}(@{{ u.telegram_username }}){% endif %}</div>
+    <div style="margin-top:10px;">
+      <a href="/admin/users/{{ u.id }}/export"><button type="button">Экспорт JSON</button></a>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3 style="margin-top:0;">Токены по дням (60)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>IN</th>
+            <th>OUT</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in usage_days %}
+            <tr>
+              <td class="muted">{{ d.day }}</td>
+              <td>{{ d.prompt_tokens }}</td>
+              <td>{{ d.completion_tokens }}</td>
+              <td><strong>{{ d.total_tokens }}</strong></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0;">RAG запросы (50)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Когда</th>
+            <th>Статус</th>
+            <th>Профиль</th>
+            <th>Query</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rag_requests %}
+            <tr>
+              <td class="muted">{{ r.created_at }}</td>
+              <td><span class="pill">{{ r.status }}</span></td>
+              <td class="muted">{{ r.search_profile }}</td>
+              <td><pre style="margin:0;">{{ (r.user_query or '')[:260] }}</pre></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">Сообщения (50)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Когда</th>
+          <th>Role</th>
+          <th>Text</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in messages %}
+          <tr>
+            <td class="muted">{{ m.created_at }}</td>
+            <td><span class="pill">{{ m.role }}</span></td>
+            <td><pre style="margin:0;">{{ (m.text or '')[:420] }}</pre></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+

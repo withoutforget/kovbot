@@ -19,7 +19,8 @@ def sha256_bytes(data: bytes) -> str:
 
 def extract_text_per_page(pdf_bytes: bytes, max_pages: int | None = None) -> PdfTextExtraction:
     try:
-        reader = PdfReader(io.BytesIO(pdf_bytes))
+        # Some PDFs in the wild have broken xref tables; strict=False improves resilience.
+        reader = PdfReader(io.BytesIO(pdf_bytes), strict=False)
     except DependencyError as e:
         # pypdf requires cryptography for AES-encrypted PDFs.
         raise ValueError("Encrypted PDF requires cryptography dependency") from e

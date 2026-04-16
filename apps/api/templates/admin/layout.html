@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title or "Kov Admin" }}</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; }
+      header { padding: 14px 18px; border-bottom: 1px solid rgba(127,127,127,.25); display: flex; gap: 12px; align-items: baseline; }
+      header a { text-decoration: none; }
+      main { padding: 18px; max-width: 1100px; margin: 0 auto; }
+      .card { border: 1px solid rgba(127,127,127,.25); border-radius: 10px; padding: 14px; margin: 14px 0; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { padding: 8px 10px; border-bottom: 1px solid rgba(127,127,127,.2); text-align: left; vertical-align: top; }
+      input, textarea, select, button { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(127,127,127,.35); }
+      textarea { width: 100%; min-height: 120px; }
+      .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+      .row > * { flex: 1 1 180px; }
+      .muted { opacity: .7; }
+      pre { white-space: pre-wrap; word-break: break-word; }
+      code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+      .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(127,127,127,.35); font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a href="/admin/"><strong>Kov Admin</strong></a>
+      <span class="muted">|</span>
+      <a href="/admin/rag/documents">RAG документы</a>
+      <a href="/admin/rag/upload">Добавить PDF</a>
+      <a href="/admin/qdrant/search">Qdrant поиск</a>
+      <a href="/admin/rag/search">RAG поиск</a>
+      <a href="/admin/users">Юзеры</a>
+    </header>
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

@@ -2,7 +2,7 @@ from kov.config import AppConfig
 from kov.rag.search.planner import plan_queries
 
 
-def test_plan_queries_respects_max_queries():
+async def test_plan_queries_respects_max_queries():
     cfg = AppConfig.model_validate(
         {
             "env": "test",
@@ -22,6 +22,7 @@ def test_plan_queries_respects_max_queries():
             "telegram": {},
         }
     )
-    plan = plan_queries(config=cfg, user_query="мне тревожно и плохо сплю", language="ru", search_profile="quick_advice")
+    plan = await plan_queries(
+        config=cfg, user_query="мне тревожно и плохо сплю", language="ru", search_profile="quick_advice"
+    )
     assert len(plan.queries) <= 2
-

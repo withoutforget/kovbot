@@ -69,8 +69,12 @@ class S3Config(BaseModel):
 
 
 class RagScanChunkingConfig(BaseModel):
+    mode: str = "semantic"  # semantic | simple
     max_chars: int = 1200
     overlap_chars: int = 120
+    strip_repeated_headers_footers: bool = True
+    drop_low_signal_paragraphs: bool = True
+    min_alpha_chars: int = 20
 
 
 class RagScanConfig(BaseModel):
@@ -80,6 +84,9 @@ class RagScanConfig(BaseModel):
 
 class RagSearchPlannerConfig(BaseModel):
     max_queries: int = 20
+    use_llm: bool = True
+    model: str = ""
+    max_tokens: int = 800
 
 
 class RagSearchRetrievalConfig(BaseModel):
@@ -98,10 +105,27 @@ class RagSearchExpanderConfig(BaseModel):
     max_context_chars: int = 24000  # total chars across all expanded contexts
 
 
+class RagSearchRerankerConfig(BaseModel):
+    enabled: bool = True
+    # list: one call returning ordered ids; full: per-passage scoring 0..1
+    mode: str = "list"  # list | full
+    # candidates from retrieval to pass to reranker
+    top_n: int = 100
+    # candidates to keep after rerank (persist + expand from)
+    final_k: int = 100
+    # max chars of each passage sent to reranker
+    passage_max_chars: int = 800
+    # max parallel LLM calls for full mode
+    concurrency: int = 8
+    # optional model override (if empty -> use llm.model)
+    model: str = ""
+
+
 class RagSearchConfig(BaseModel):
     pipeline_version: str = "1.0"
     planner: RagSearchPlannerConfig = Field(default_factory=RagSearchPlannerConfig)
     retrieval: RagSearchRetrievalConfig = Field(default_factory=RagSearchRetrievalConfig)
+    reranker: RagSearchRerankerConfig = Field(default_factory=RagSearchRerankerConfig)
     expander: RagSearchExpanderConfig = Field(default_factory=RagSearchExpanderConfig)
     telegram: RagSearchTelegramConfig = Field(default_factory=RagSearchTelegramConfig)
 
@@ -110,8 +134,9 @@ class LlmConfig(BaseModel):
     base_url: str = ""
     api_key: str = ""
     model: str = ""
+    fallback_model: str = ""
     temperature: float = 0.2
-    max_tokens: int = 800
+    max_tokens: int = 2500
 
 
 class EmbeddingsConfig(BaseModel):

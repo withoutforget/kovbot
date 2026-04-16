@@ -38,6 +38,7 @@ async def ensure_user_id(event: Message | CallbackQuery, *, timezone: str = "UTC
             "/users/ensure",
             {
                 "telegram_user_id": str(user.id),
+                "telegram_username": (user.username or ""),
                 "timezone": timezone or "UTC",
                 "language": user.language_code or "ru",
             },

@@ -22,16 +22,31 @@ s3:
 rag_scan:
   pipeline_version: "1.0"
   chunking:
+    mode: ${RAG_SCAN_CHUNKING_MODE:-semantic}
     max_chars: 1200
     overlap_chars: 120
+    strip_repeated_headers_footers: ${RAG_SCAN_STRIP_HEADERS_FOOTERS:-true}
+    drop_low_signal_paragraphs: ${RAG_SCAN_DROP_LOW_SIGNAL:-true}
+    min_alpha_chars: ${RAG_SCAN_MIN_ALPHA_CHARS:-20}
 
 rag_search:
   pipeline_version: "1.0"
   planner:
     max_queries: 20
+    use_llm: ${RAG_SEARCH_PLANNER_USE_LLM:-true}
+    model: ${RAG_SEARCH_PLANNER_MODEL:-}
+    max_tokens: ${RAG_SEARCH_PLANNER_MAX_TOKENS:-800}
   retrieval:
     top_k_per_query: 10
     min_score: 0.0
+  reranker:
+    enabled: ${RAG_SEARCH_RERANKER_ENABLED:-true}
+    mode: ${RAG_SEARCH_RERANKER_MODE:-list}
+    top_n: ${RAG_SEARCH_RERANKER_TOP_N:-100}
+    final_k: ${RAG_SEARCH_RERANKER_FINAL_K:-100}
+    passage_max_chars: ${RAG_SEARCH_RERANKER_PASSAGE_MAX_CHARS:-800}
+    concurrency: ${RAG_SEARCH_RERANKER_CONCURRENCY:-8}
+    model: ${RAG_SEARCH_RERANKER_MODEL:-}
   expander:
     seed_top_n: 10
     neighbor_window: 5
@@ -44,8 +59,9 @@ llm:
   base_url: ${LLM_BASE_URL:-}
   api_key: ${LLM_API_KEY:-}
   model: ${LLM_MODEL:-}
+  fallback_model: ${LLM_FALLBACK_MODEL:-}
   temperature: 0.2
-  max_tokens: 800
+  max_tokens: ${LLM_MAX_TOKENS:-2500}
 
 embeddings:
   provider: ${EMBEDDINGS_PROVIDER:-fake}

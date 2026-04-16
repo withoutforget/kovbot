@@ -18,6 +18,7 @@ router = APIRouter()
 
 class EnsureUserRequest(BaseModel):
     telegram_user_id: str
+    telegram_username: str = ""
     timezone: str = "UTC"
     language: str = "ru"
 
@@ -39,12 +40,14 @@ async def ensure_user(req: EnsureUserRequest, session: AsyncSession = Depends(ge
         .values(
             id=uuid.uuid4(),
             telegram_user_id=req.telegram_user_id,
+            telegram_username=(req.telegram_username or "").lstrip("@"),
             timezone=req.timezone or "UTC",
             language=req.language or "ru",
         )
         .on_conflict_do_update(
             index_elements=[User.telegram_user_id],
             set_={
+                "telegram_username": (req.telegram_username or "").lstrip("@"),
                 "timezone": req.timezone or "UTC",
                 "language": req.language or "ru",
             },

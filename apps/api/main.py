@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import os
 from contextlib import asynccontextmanager
 
 from dishka import make_async_container
 from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from kov.config import load_config
 from kov.di.providers import AppProvider
@@ -15,6 +17,7 @@ from kov.web.routers.dialog import router as dialog_router
 from kov.web.routers.export import router as export_router
 from kov.web.routers.llm import router as llm_router
 from kov.web.routers.mood import router as mood_router
+from kov.web.routers.admin import router as admin_router
 from kov.web.routers.rag_scan import router as rag_scan_router
 from kov.web.routers.rag_search import router as rag_search_router
 from kov.web.routers.ragd import router as rag_debug_router
@@ -65,6 +68,15 @@ def create_app() -> FastAPI:
         await engine.dispose()
 
     app = FastAPI(title="Kov API", version="0.1.0", lifespan=lifespan)
+    allowed_origins = [o.strip() for o in (os.environ.get("CORS_ALLOWED_ORIGINS", "")).split(",") if o.strip()]
+    if allowed_origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=allowed_origins,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
     setup_dishka(container, app)
 
     app.include_router(health_router, tags=["health"])
@@ -81,6 +93,7 @@ def create_app() -> FastAPI:
     app.include_router(rag_scan_router, prefix="/rag/scan", tags=["rag_scan"])
     app.include_router(rag_search_router, prefix="/rag/search", tags=["rag_search"])
     app.include_router(rag_debug_router, prefix="/ragd", tags=["rag_debug"])
+    app.include_router(admin_router, prefix="/admin", tags=["admin"])
     return app
 
 

@@ -1,0 +1,55 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+  <div class="card">
+    <h2 style="margin:0 0 6px 0;">Документ</h2>
+    <div><code>{{ doc.id }}</code></div>
+    <div class="muted">{{ doc.original_filename }}</div>
+    <div style="margin-top:10px;">
+      <span class="pill">status: {{ doc.status }}</span>
+      <span class="pill">pdf_type: {{ doc.pdf_type }}</span>
+      <span class="pill">pages: {{ doc.page_count }}</span>
+      <span class="pill">size: {{ doc.size_bytes }} bytes</span>
+    </div>
+    {% if doc.error_reason %}
+      <div style="margin-top:10px;"><strong>Ошибка:</strong> {{ doc.error_reason }}</div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0; color: #b00020;">Удаление</h3>
+    <div class="muted">Полное удаление: Postgres + Qdrant + S3 (MinIO). Необратимо.</div>
+    <form action="/admin/rag/documents/{{ doc.id }}/delete" method="post" style="margin-top:10px;">
+      <label style="display:flex; gap:8px; align-items:center;">
+        <input type="checkbox" name="confirm" value="1" />
+        <span>Подтверждаю удаление документа</span>
+      </label>
+      <div style="margin-top:10px;">
+        <button type="submit" style="border-color:#b00020;">Удалить документ</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">Чанки</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Страницы</th>
+          <th>Heading</th>
+          <th>Snippet</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in chunks %}
+          <tr>
+            <td>{{ c.chunk_no }}</td>
+            <td class="muted">{{ c.page_start }}–{{ c.page_end }}</td>
+            <td class="muted">{{ (c.heading_path or [])|join(" / ") }}</td>
+            <td><pre style="margin:0;">{{ c.text[:420] }}</pre></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

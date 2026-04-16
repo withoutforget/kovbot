@@ -1,0 +1,85 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+  <div class="card">
+    <h2 style="margin:0 0 6px 0;">RAG поиск</h2>
+    <div class="muted">Answer или debug с параметрами retrieval + overrides LLM.</div>
+  </div>
+
+  <div class="card">
+    <form action="/admin/rag/search" method="post">
+      <div class="row">
+        <div>
+          <div class="muted" style="margin-bottom:6px;">Запрос пользователя</div>
+          <input name="user_query" value="{{ user_query or '' }}" placeholder="Например: как справляться с тревогой" required />
+        </div>
+        <div>
+          <div class="muted" style="margin-bottom:6px;">user_id (опционально)</div>
+          <input name="user_id" value="{{ user_id or '' }}" placeholder="UUID пользователя" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <div>
+          <div class="muted" style="margin-bottom:6px;">scenario_id (опционально)</div>
+          <input name="scenario_id" value="{{ scenario_id or '' }}" placeholder="knowledge_base / ..." />
+        </div>
+        <div>
+          <div class="muted" style="margin-bottom:6px;">Язык</div>
+          <select name="language">
+            <option value="ru" {% if (language or 'ru') == 'ru' %}selected{% endif %}>ru</option>
+            <option value="en" {% if (language or 'ru') == 'en' %}selected{% endif %}>en</option>
+          </select>
+        </div>
+        <div>
+          <div class="muted" style="margin-bottom:6px;">Профиль поиска</div>
+          <select name="search_profile">
+            <option value="quick_advice" {% if (search_profile or 'quick_advice') == 'quick_advice' %}selected{% endif %}>quick_advice</option>
+            <option value="psychoeducation" {% if (search_profile or '') == 'psychoeducation' %}selected{% endif %}>psychoeducation</option>
+            <option value="exercise_first" {% if (search_profile or '') == 'exercise_first' %}selected{% endif %}>exercise_first</option>
+            <option value="crisis_sensitive" {% if (search_profile or '') == 'crisis_sensitive' %}selected{% endif %}>crisis_sensitive</option>
+          </select>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <div>
+          <div class="muted" style="margin-bottom:6px;">Retrieval: top_k_per_query</div>
+          <input name="retrieval_top_k_per_query" type="number" value="{{ retrieval_top_k_per_query or 10 }}" min="1" max="100" />
+        </div>
+        <div>
+          <div class="muted" style="margin-bottom:6px;">Retrieval: min_score</div>
+          <input name="retrieval_min_score" type="number" step="0.01" value="{{ retrieval_min_score or 0.0 }}" />
+        </div>
+        <div>
+          <div class="muted" style="margin-bottom:6px;">Режим</div>
+          <select name="mode">
+            <option value="answer">answer</option>
+            <option value="debug">debug</option>
+          </select>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <div>
+          <div class="muted" style="margin-bottom:6px;">LLM model override (опционально)</div>
+          <input name="llm_model" value="{{ llm_model or '' }}" placeholder="например: gpt-4o-mini" />
+        </div>
+        <div>
+          <div class="muted" style="margin-bottom:6px;">LLM temperature</div>
+          <input name="llm_temperature" type="number" step="0.1" value="{{ llm_temperature or 0.2 }}" />
+        </div>
+        <div>
+          <div class="muted" style="margin-bottom:6px;">LLM max_tokens</div>
+          <input name="llm_max_tokens" type="number" value="{{ llm_max_tokens or 2500 }}" />
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        <button type="submit">Запустить</button>
+      </div>
+    </form>
+  </div>
+
+  {% if result %}
+    <div class="card">
+      <h3 style="margin-top:0;">Результат: {{ result.mode }}</h3>
+      <pre>{{ result.payload | tojson(indent=2) }}</pre>
+    </div>
+  {% endif %}
+{% endblock %}

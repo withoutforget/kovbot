@@ -22,6 +22,7 @@ s3:
 rag_scan:
   pipeline_version: "1.0"
   chunking:
+    mode: semantic
     max_chars: 600
     overlap_chars: 60
 
@@ -29,9 +30,20 @@ rag_search:
   pipeline_version: "1.0"
   planner:
     max_queries: 8
+    use_llm: false
+    model: ""
+    max_tokens: 200
   retrieval:
     top_k_per_query: 5
     min_score: 0.0
+  reranker:
+    enabled: true
+    mode: list
+    top_n: 50
+    final_k: 50
+    passage_max_chars: 300
+    concurrency: 4
+    model: ""
   expander:
     seed_top_n: 5
     neighbor_window: 2
@@ -44,6 +56,7 @@ llm:
   base_url: ""
   api_key: ""
   model: ""
+  fallback_model: ""
   temperature: 0.2
   max_tokens: 400
 

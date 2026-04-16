@@ -16,7 +16,7 @@ from kov.db.models import Chunk as DbChunk
 from kov.db.models import Document
 from kov.embeddings.factory import create_embedder
 from kov.logging import get_logger
-from kov.rag.scan.chunking import simple_chunk_text
+from kov.rag.scan.chunking import semantic_chunk_text, simple_chunk_text
 from kov.rag.scan.pdf import detect_pdf_type, extract_text_per_page, sha256_bytes
 
 
@@ -73,11 +73,24 @@ class RagScanService:
                 {"page_texts": page_texts, "pdf_type": pdf_type, "page_count": page_count},
             )
 
-            chunks = simple_chunk_text(
-                page_texts=page_texts,
-                max_chars=self.config.rag_scan.chunking.max_chars,
-                overlap_chars=self.config.rag_scan.chunking.overlap_chars,
-            )
+            chunking_mode = (self.config.rag_scan.chunking.mode or "semantic").lower()
+            if chunking_mode == "simple":
+                chunks = simple_chunk_text(
+                    page_texts=page_texts,
+                    max_chars=self.config.rag_scan.chunking.max_chars,
+                    overlap_chars=self.config.rag_scan.chunking.overlap_chars,
+                )
+            else:
+                chunks = semantic_chunk_text(
+                    page_texts=page_texts,
+                    max_chars=self.config.rag_scan.chunking.max_chars,
+                    overlap_chars=self.config.rag_scan.chunking.overlap_chars,
+                    strip_repeated_headers_footers=bool(
+                        self.config.rag_scan.chunking.strip_repeated_headers_footers
+                    ),
+                    drop_low_signal_paragraphs=bool(self.config.rag_scan.chunking.drop_low_signal_paragraphs),
+                    min_alpha_chars=int(self.config.rag_scan.chunking.min_alpha_chars or 20),
+                )
 
             db_chunks: list[DbChunk] = []
             for idx, chunk in enumerate(chunks, start=1):

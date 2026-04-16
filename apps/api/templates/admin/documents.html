@@ -1,0 +1,34 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+  <div class="card">
+    <h2 style="margin:0 0 6px 0;">RAG документы</h2>
+    <div class="muted">Показываются последние 200 документов.</div>
+  </div>
+
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Файл</th>
+          <th>Статус</th>
+          <th>Страниц</th>
+          <th>Размер</th>
+          <th>Создан</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in docs %}
+          <tr>
+            <td><code><a href="/admin/rag/documents/{{ d.id }}">{{ d.id }}</a></code></td>
+            <td>{{ d.original_filename }}</td>
+            <td><span class="pill">{{ d.status }}</span></td>
+            <td>{{ d.page_count }}</td>
+            <td class="muted">{{ d.size_bytes }}</td>
+            <td class="muted">{{ d.created_at }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

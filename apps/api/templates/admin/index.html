@@ -1,0 +1,31 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+  <div class="card">
+    <h2 style="margin:0 0 6px 0;">Панель администратора</h2>
+    <div class="muted">Инструменты для тестирования RAG/Qdrant и управления документами.</div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3 style="margin-top:0;">Документы</h3>
+      <div class="muted">Список документов и чанков.</div>
+      <p><a href="/admin/rag/documents">Открыть</a></p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;">Загрузка PDF</h3>
+      <div class="muted">Добавить документ в RAG (сканирование/чанкинг/индексация).</div>
+      <p><a href="/admin/rag/upload">Открыть</a></p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;">Qdrant</h3>
+      <div class="muted">Поиск по коллекции с фильтрами (JSON).</div>
+      <p><a href="/admin/qdrant/search">Открыть</a></p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;">RAG поиск</h3>
+      <div class="muted">Запуск RAG ответа или debug пайплайна с параметрами.</div>
+      <p><a href="/admin/rag/search">Открыть</a></p>
+    </div>
+  </div>
+{% endblock %}
+

@@ -1,0 +1,17 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+  <div class="card">
+    <h2 style="margin:0 0 6px 0;">Загрузка PDF</h2>
+    <div class="muted">Файл будет залит в S3 и поставлен в очередь на обработку.</div>
+  </div>
+
+  <div class="card">
+    <form action="/admin/rag/upload" method="post" enctype="multipart/form-data">
+      <div class="row">
+        <input type="file" name="file" accept="application/pdf" required />
+        <button type="submit">Загрузить</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}
+
