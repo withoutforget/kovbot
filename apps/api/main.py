@@ -18,6 +18,7 @@ from kov.web.routers.llm import router as llm_router
 from kov.web.routers.mood import router as mood_router
 from kov.web.routers.rag_scan import router as rag_scan_router
 from kov.web.routers.rag_search import router as rag_search_router
+from kov.web.routers.ragd import router as rag_debug_router
 from kov.web.routers.reports import router as reports_router
 from kov.web.routers.scenarios import router as scenarios_router
 from kov.web.routers.schedule import router as schedule_router
@@ -40,12 +41,26 @@ def create_app() -> FastAPI:
         from sqlalchemy.ext.asyncio import AsyncEngine
 
         engine = await container.get(AsyncEngine)
+        # Backward-compatible app.state for routers that use fastapi Depends(get_db_session) etc.
+        # Newer routers use Dishka injection directly.
+        app.state.config = config
+        app.state.db_engine = engine
+
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         # seed scenarios
         from sqlalchemy.ext.asyncio import async_sessionmaker
 
         sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
+        app.state.db_sessionmaker = sessionmaker
+
+        from qdrant_client import QdrantClient
+
+        app.state.qdrant = await container.get(QdrantClient)
+        from botocore.client import BaseClient
+
+        app.state.s3 = await container.get(BaseClient)
+
         async with sessionmaker() as session:
             await seed_scenarios(session)
         yield
@@ -68,6 +83,7 @@ def create_app() -> FastAPI:
     app.include_router(llm_router, prefix="/llm", tags=["llm"])
     app.include_router(rag_scan_router, prefix="/rag/scan", tags=["rag_scan"])
     app.include_router(rag_search_router, prefix="/rag/search", tags=["rag_search"])
+    app.include_router(rag_debug_router, prefix="/ragd", tags=["rag_debug"])
     return app
 
 

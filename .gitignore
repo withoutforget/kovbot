@@ -16,3 +16,5 @@ build/
 artifacts/
 data/
 
+# Local configs with secrets (keep dev/prod templates tracked)
+configs/local*.yaml

@@ -5,6 +5,7 @@ import io
 from dataclasses import dataclass
 
 from pypdf import PdfReader
+from pypdf.errors import DependencyError
 
 
 @dataclass(frozen=True)
@@ -17,7 +18,20 @@ def sha256_bytes(data: bytes) -> str:
 
 
 def extract_text_per_page(pdf_bytes: bytes, max_pages: int | None = None) -> PdfTextExtraction:
-    reader = PdfReader(io.BytesIO(pdf_bytes))
+    try:
+        reader = PdfReader(io.BytesIO(pdf_bytes))
+    except DependencyError as e:
+        # pypdf requires cryptography for AES-encrypted PDFs.
+        raise ValueError("Encrypted PDF requires cryptography dependency") from e
+
+    if getattr(reader, "is_encrypted", False):
+        try:
+            ok = reader.decrypt("")  # may succeed for PDFs without a user password
+        except Exception as e:  # pragma: no cover
+            raise ValueError("Encrypted PDF is not supported") from e
+        if not ok:
+            raise ValueError("Encrypted PDF is not supported (password required)")
+
     page_texts: list[str] = []
     for i, page in enumerate(reader.pages):
         if max_pages is not None and i >= max_pages:

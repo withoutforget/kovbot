@@ -38,7 +38,7 @@ class AppProvider(Provider):
 
     @provide(scope=Scope.APP)
     def qdrant(self, config: AppConfig) -> QdrantClient:
-        client = create_qdrant_client(config.qdrant.url)
+        client = create_qdrant_client(config.qdrant.url, timeout_seconds=config.qdrant.timeout_seconds)
         ensure_collection(client, config.qdrant.collection, config.qdrant.vector_size)
         return client
 
@@ -52,4 +52,3 @@ class AppProvider(Provider):
         )
         ensure_bucket(s3, config.s3.bucket)
         return s3
-

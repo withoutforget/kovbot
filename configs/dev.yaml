@@ -9,6 +9,8 @@ qdrant:
   url: ${QDRANT_URL:-http://qdrant:6333}
   collection: kov_chunks
   vector_size: 64
+  timeout_seconds: ${QDRANT_TIMEOUT_SECONDS:-120}
+  upsert_batch_size: ${QDRANT_UPSERT_BATCH_SIZE:-64}
 
 s3:
   endpoint_url: ${S3_ENDPOINT_URL:-http://minio:9000}
@@ -30,18 +32,28 @@ rag_search:
   retrieval:
     top_k_per_query: 10
     min_score: 0.0
+  expander:
+    seed_top_n: 10
+    neighbor_window: 5
+    max_context_chars: 24000
   telegram:
     safe_limit_chars: 3900
     max_parts: 3
 
 llm:
-  base_url: ${LLM_BASE_URL:-""}
-  api_key: ${LLM_API_KEY:-""}
-  model: ${LLM_MODEL:-""}
+  base_url: ${LLM_BASE_URL:-}
+  api_key: ${LLM_API_KEY:-}
+  model: ${LLM_MODEL:-}
   temperature: 0.2
   max_tokens: 800
 
-telegram:
-  bot_token: ${TELEGRAM_BOT_TOKEN:-""}
-  api_base_url: http://api:8000
+embeddings:
+  provider: ${EMBEDDINGS_PROVIDER:-fake}
+  base_url: ${EMBEDDINGS_BASE_URL:-}
+  api_key: ${EMBEDDINGS_API_KEY:-}
+  model: ${EMBEDDINGS_MODEL:-}
+  batch_size: ${EMBEDDINGS_BATCH_SIZE:-64}
 
+telegram:
+  bot_token: ${TELEGRAM_BOT_TOKEN:-}
+  api_base_url: http://api:8000

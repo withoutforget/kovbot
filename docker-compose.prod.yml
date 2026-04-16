@@ -1,0 +1,70 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: prod_runner
+    environment:
+      KOV_CONFIG_PATH: ${KOV_CONFIG_PATH:-configs/prod.yaml}
+      POSTGRES_DB: ${POSTGRES_DB:-kov}
+      POSTGRES_USER: ${POSTGRES_USER:-kov}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kov}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://minio:9000}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+      S3_BUCKET: ${S3_BUCKET:-kov-artifacts}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+    restart: unless-stopped
+    command:
+      [
+        "uvicorn",
+        "apps.api.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--proxy-headers",
+        "--forwarded-allow-ips",
+        "*",
+        "--workers",
+        "2",
+      ]
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: prod_runner
+    environment:
+      KOV_CONFIG_PATH: ${KOV_CONFIG_PATH:-configs/prod.yaml}
+      POSTGRES_DB: ${POSTGRES_DB:-kov}
+      POSTGRES_USER: ${POSTGRES_USER:-kov}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kov}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://minio:9000}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+      S3_BUCKET: ${S3_BUCKET:-kov-artifacts}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+    restart: unless-stopped
+
+  bot:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: prod_runner
+    environment:
+      KOV_CONFIG_PATH: ${KOV_CONFIG_PATH:-configs/prod.yaml}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+    restart: unless-stopped

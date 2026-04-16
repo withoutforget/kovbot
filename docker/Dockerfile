@@ -1,9 +1,9 @@
-FROM python:3.11-slim AS builder
+FROM python:3.12-slim AS builder
 WORKDIR /app
 COPY requirements/ ./requirements/
 RUN pip install --no-cache-dir -r requirements/base.txt
 
-FROM python:3.11-slim AS runner
+FROM python:3.12-slim AS runner
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
@@ -14,4 +14,3 @@ USER app
 
 FROM runner AS prod_runner
 # reserved for future prod hardening
-

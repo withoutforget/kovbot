@@ -46,12 +46,23 @@ def test_scan_and_search_roundtrip():
     pdf_bytes = base64.b64decode(SAMPLE_PDF_B64)
     files = {"file": ("sample.pdf", pdf_bytes, "application/pdf")}
     r = requests.post(API_URL + "/rag/scan/upload", files=files, timeout=60)
-    assert r.status_code == 200
+    assert r.status_code == 202
     doc_id = r.json()["document_id"]
 
-    r = requests.get(API_URL + f"/rag/scan/documents/{doc_id}", timeout=10)
-    assert r.status_code == 200
-    assert r.json()["status"] == "completed"
+    # processing is async; wait until completed
+    deadline = time.time() + 120
+    status = None
+    while time.time() < deadline:
+        r = requests.get(API_URL + f"/rag/scan/documents/{doc_id}", timeout=10)
+        assert r.status_code == 200
+        status = r.json()["status"]
+        if status == "completed":
+            break
+        assert status in {"queued", "processing", "parsed", "failed"}
+        if status == "failed":
+            raise AssertionError(r.json().get("error_reason") or "scan failed")
+        time.sleep(1)
+    assert status == "completed"
 
     r = requests.post(
         API_URL + "/rag/search",

@@ -1,12 +1,13 @@
 services:
   postgres:
     image: postgres:16
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-kov}
       POSTGRES_USER: ${POSTGRES_USER:-kov}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kov}
-    ports:
-      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
@@ -15,28 +16,48 @@ services:
 
   qdrant:
     image: qdrant/qdrant:v1.11.5
-    ports:
-      - "6333:6333"
+    restart: unless-stopped
+    volumes:
+      - qdrant_data:/qdrant/storage
 
   minio:
     image: quay.io/minio/minio:RELEASE.2024-08-26T15-33-07Z
+    restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minioadmin}
       MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-minioadmin}
-    ports:
-      - "9000:9000"
-      - "9001:9001"
+    volumes:
+      - minio_data:/data
 
   api:
     build:
       context: .
       dockerfile: docker/Dockerfile
       target: runner
+    restart: unless-stopped
     environment:
       KOV_CONFIG_PATH: ${KOV_CONFIG_PATH:-configs/dev.yaml}
-    env_file:
-      - .env
+      POSTGRES_DB: ${POSTGRES_DB:-kov}
+      POSTGRES_USER: ${POSTGRES_USER:-kov}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kov}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+      QDRANT_TIMEOUT_SECONDS: ${QDRANT_TIMEOUT_SECONDS:-}
+      QDRANT_UPSERT_BATCH_SIZE: ${QDRANT_UPSERT_BATCH_SIZE:-}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://minio:9000}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+      S3_BUCKET: ${S3_BUCKET:-kov-artifacts}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      EMBEDDINGS_PROVIDER: ${EMBEDDINGS_PROVIDER:-}
+      EMBEDDINGS_BASE_URL: ${EMBEDDINGS_BASE_URL:-}
+      EMBEDDINGS_API_KEY: ${EMBEDDINGS_API_KEY:-}
+      EMBEDDINGS_MODEL: ${EMBEDDINGS_MODEL:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,16 +68,44 @@ services:
     ports:
       - "8000:8000"
     command: ["uvicorn", "apps.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).read()\"",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   worker:
     build:
       context: .
       dockerfile: docker/Dockerfile
       target: runner
+    restart: unless-stopped
     environment:
       KOV_CONFIG_PATH: ${KOV_CONFIG_PATH:-configs/dev.yaml}
-    env_file:
-      - .env
+      POSTGRES_DB: ${POSTGRES_DB:-kov}
+      POSTGRES_USER: ${POSTGRES_USER:-kov}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kov}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+      QDRANT_TIMEOUT_SECONDS: ${QDRANT_TIMEOUT_SECONDS:-}
+      QDRANT_UPSERT_BATCH_SIZE: ${QDRANT_UPSERT_BATCH_SIZE:-}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://minio:9000}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+      S3_BUCKET: ${S3_BUCKET:-kov-artifacts}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      EMBEDDINGS_PROVIDER: ${EMBEDDINGS_PROVIDER:-}
+      EMBEDDINGS_BASE_URL: ${EMBEDDINGS_BASE_URL:-}
+      EMBEDDINGS_API_KEY: ${EMBEDDINGS_API_KEY:-}
+      EMBEDDINGS_MODEL: ${EMBEDDINGS_MODEL:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -71,11 +120,16 @@ services:
       context: .
       dockerfile: docker/Dockerfile
       target: runner
+    restart: unless-stopped
     environment:
       KOV_CONFIG_PATH: ${KOV_CONFIG_PATH:-configs/dev.yaml}
-    env_file:
-      - .env
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
     depends_on:
       api:
-        condition: service_started
+        condition: service_healthy
     command: ["python", "-m", "apps.bot.main"]
+
+volumes:
+  postgres_data:
+  qdrant_data:
+  minio_data:

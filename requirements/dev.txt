@@ -4,4 +4,4 @@ pytest-asyncio==0.24.0
 pytest-httpx==0.32.0
 tenacity==9.0.0
 requests==2.32.3
-
+ruff==0.6.9

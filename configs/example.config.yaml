@@ -9,6 +9,8 @@ qdrant:
   url: http://qdrant:6333
   collection: kov_chunks
   vector_size: 64
+  timeout_seconds: 120
+  upsert_batch_size: 64
 
 s3:
   endpoint_url: http://minio:9000
@@ -30,6 +32,10 @@ rag_search:
   retrieval:
     top_k_per_query: 10
     min_score: 0.0
+  expander:
+    seed_top_n: 10
+    neighbor_window: 5
+    max_context_chars: 24000
   telegram:
     safe_limit_chars: 3900
     max_parts: 3
@@ -41,7 +47,13 @@ llm:
   temperature: 0.2
   max_tokens: 800
 
+embeddings:
+  provider: fake
+  base_url: ""
+  api_key: ""
+  model: ""
+  batch_size: 64
+
 telegram:
   bot_token: ""
   api_base_url: http://api:8000
-
