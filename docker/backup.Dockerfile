@@ -5,6 +5,8 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
 ARG PG_MAJOR=16
+ENV PG_MAJOR=${PG_MAJOR}
+ENV PATH="/usr/lib/postgresql/${PG_MAJOR}/bin:${PATH}"
 
 # We need `pg_dump/pg_restore` that match the Postgres major version (server is `postgres:${PG_MAJOR}`).
 # `python:*-slim` (Debian) doesn't ship `postgresql-client-${PG_MAJOR}` by default, so we add PGDG.
