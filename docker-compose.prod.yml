@@ -84,7 +84,9 @@ services:
       - internal
 
   nginx:
-    image: nginx:1.27-alpine
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
       api:
@@ -92,10 +94,8 @@ services:
     environment:
       ADMIN_USER: ${ADMIN_USER:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
-    volumes:
-      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./docker/nginx/entrypoint.sh:/entrypoint.sh:ro
-    entrypoint: ["/entrypoint.sh"]
+    # Config + entrypoint are baked into the image to avoid host permission issues
+    # (bind-mounted scripts may lack executable bit).
     ports:
       - "80:80"
       - "8443:8443"
