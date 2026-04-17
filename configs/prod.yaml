@@ -8,9 +8,11 @@ postgres:
 qdrant:
   url: ${QDRANT_URL:-http://qdrant:6333}
   collection: kov_chunks
-  vector_size: 64
-  timeout_seconds: ${QDRANT_TIMEOUT_SECONDS:-120}
-  upsert_batch_size: ${QDRANT_UPSERT_BATCH_SIZE:-64}
+  # Must match embeddings dimensionality.
+  # For `text-embedding-3-large` it's 3072.
+  vector_size: ${QDRANT_VECTOR_SIZE:-3072}
+  timeout_seconds: ${QDRANT_TIMEOUT_SECONDS:-180}
+  upsert_batch_size: ${QDRANT_UPSERT_BATCH_SIZE:-32}
 
 s3:
   endpoint_url: ${S3_ENDPOINT_URL:-http://minio:9000}
